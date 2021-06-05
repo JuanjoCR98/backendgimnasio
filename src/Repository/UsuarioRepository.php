@@ -8,6 +8,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * @method Usuario|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,11 +18,29 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  */
 class UsuarioRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager)
     {
         parent::__construct($registry, Usuario::class);
+         $this->manager = $manager;
     }
 
+     function saveUsuario(Usuario $usuario)
+    {
+        $this->manager->persist($usuario);
+        $this->manager->flush();
+    }
+    
+    function updateUsuario(Usuario $socio)
+    {
+        $this->manager->persist($socio);
+        $this->manager->flush(); 
+    }
+
+    function removeUsuario(Usuario $socio)
+    {
+        $this->manager->remove($socio);
+        $this->manager->flush();
+    }
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
      */

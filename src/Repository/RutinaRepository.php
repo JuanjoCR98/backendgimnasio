@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Rutina;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * @method Rutina|null find($id, $lockMode = null, $lockVersion = null)
@@ -14,9 +15,28 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class RutinaRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager)
     {
         parent::__construct($registry, Rutina::class);
+         $this->manager = $manager;
+    }
+    
+      function saveRutina(Rutina $rutina)
+    {
+        $this->manager->persist($rutina);
+        $this->manager->flush();
+    }
+    
+        function updateRutina(Rutina $rutina) 
+    {
+        $this->manager->persist($rutina);
+        $this->manager->flush();
+    }
+
+    function removeRutina(Rutina $rutina)
+    {
+        $this->manager->remove($rutina);
+        $this->manager->flush();
     }
 
     // /**
