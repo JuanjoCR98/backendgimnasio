@@ -38,7 +38,13 @@ class RutinaController extends AbstractController
                 'id' => $rutina->getId(),
                 'nombre' => $rutina->getNombre(),
                 'fecha_creacion' => $rutina->getFechaCreacion(),
-                'usuario' => $rutina->getUsuario()->getNombre() . " " . $rutina->getUsuario()->getApellidos()
+                'usuario' => [
+                    "id" => $rutina->getUsuario()->getId(),
+                    "email" => $rutina->getUsuario()->getEmail(),
+                    "nombre" =>  $rutina->getUsuario()->getNombre(),
+                    "apellidos" => $rutina->getUsuario()->getApellidos(),
+                    "fecha_nacimiento" => $rutina->getUsuario()->getFechaNacimiento()
+                ]
             ];
         }
         
@@ -65,9 +71,14 @@ class RutinaController extends AbstractController
                 'id' => $rutina->getId(),
                 'nombre' => $rutina->getNombre(),
                 'fecha_creacion' => $rutina->getFechaCreacion(),
-                'usuario' => $rutina->getUsuario()->getNombre() . " " . $rutina->getUsuario()->getApellidos()
-            ];  
-           
+                 'usuario' => [
+                    "id" => $rutina->getUsuario()->getId(),
+                    "email" => $rutina->getUsuario()->getEmail(),
+                    "nombre" =>  $rutina->getUsuario()->getNombre(),
+                    "apellidos" => $rutina->getUsuario()->getApellidos(),
+                    "fecha_nacimiento" => $rutina->getUsuario()->getFechaNacimiento()
+                ]
+            ];   
             return new JsonResponse($data, Response::HTTP_OK);
         }
         return new JsonResponse(["status"=>"No existe una rutina con ese id"], Response::HTTP_PARTIAL_CONTENT);      
@@ -106,11 +117,15 @@ class RutinaController extends AbstractController
         $id = $data["usuario"];
         $fecha_creacion = new DateTime();
 
-	$usuario = $this->usuarioRepository->findOneBy(array("id" => $id));
-
+        if($id != 0){
+           $usuario = $this->usuarioRepository->findOneBy(array("id" => $id)); 
+        }else{
+             return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_PARTIAL_CONTENT);
+        }
+	
         if ($usuario != null) 
         {
-            if (empty($nombre)) 
+            if (empty($nombre) || $id == 0) 
             {
                 return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_PARTIAL_CONTENT);
             } 
@@ -147,7 +162,6 @@ class RutinaController extends AbstractController
         else
         {
             empty($data["nombre"]) ? true : $rutina->setNombre($data["nombre"]);
-
             $this->rutinaRepository->updateRutina($rutina);
         }
         return new JsonResponse(['status' => 'Se ha actualizado correctamente'], Response::HTTP_OK);

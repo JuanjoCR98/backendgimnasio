@@ -50,6 +50,7 @@ class TipoEjercicioController extends AbstractController
                    'nombre'=>$ejercicio->getNombre(),
                    'ejecucion'=>$ejercicio->getEjecucion(),
                    'foto'=>$ejercicio->getFoto(),
+                   'tipo'=>$ejercicio->getTipoEjercicio()->getTipo()
                ];
             }
             $data[] = [

@@ -20,7 +20,7 @@ class EjercicioController extends AbstractController
     }
 
     /**
-      * @Route("/ejercicio", name="ejercicio" , methods={"GET"})
+      * @Route("/ejercicio", name="ejercicios" , methods={"GET"})
      */
     public function ejercicios(): JsonResponse
     {
