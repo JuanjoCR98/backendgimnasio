@@ -51,7 +51,7 @@ class RutinaController extends AbstractController
     }
     
        /**
-     * @Route( "/rutina/{id}" , name="getall_rutina", methods={"GET"})
+     * @Route( "/rutina/{id}" , name="get_rutina", methods={"GET"})
      */
     public function obtenerRutina($id):JsonResponse
     {
@@ -96,13 +96,14 @@ class RutinaController extends AbstractController
     
     
     /**
-     * @Route("/rutina/usuario/{id}" , name="add_rutina" , methods={"POST"})
+     * @Route("/rutina/usuario" , name="add_rutina" , methods={"POST"})
      */
-    public function add(int $id,Request $request)
+    public function add(Request $request)
     {
         $data = json_decode($request->getContent(), true);
         
         $nombre = $data["nombre"];
+        $id = $data["usuario"];
         $fecha_creacion = new DateTime();
 
 	$usuario = $this->usuarioRepository->findOneBy(array("id" => $id));

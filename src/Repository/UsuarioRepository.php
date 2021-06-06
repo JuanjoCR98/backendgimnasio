@@ -30,15 +30,15 @@ class UsuarioRepository extends ServiceEntityRepository implements PasswordUpgra
         $this->manager->flush();
     }
     
-    function updateUsuario(Usuario $socio)
+    function updateUsuario(Usuario $usuario)
     {
-        $this->manager->persist($socio);
+        $this->manager->persist($usuario);
         $this->manager->flush(); 
     }
 
-    function removeUsuario(Usuario $socio)
+    function removeUsuario(Usuario $usuario)
     {
-        $this->manager->remove($socio);
+        $this->manager->remove($usuario);
         $this->manager->flush();
     }
     /**

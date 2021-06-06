@@ -147,7 +147,7 @@ class UsuarioController extends AbstractController
                     'email' => $usuario->getEmail(),
                     'nombre' => $usuario->getNombre(),
                     'apellidos' => $usuario->getApellidos(),
-                    'fecha_nac' => $usuario->getFechaNacimiento(),
+                    'fecha_nacimiento' => $usuario->getFechaNacimiento(),
                     'foto' => $usuario->getFoto(),
                     'rol' => $usuario->getRol(),
                     'facebook'=>$usuario->getRedSocial()->getFacebook(),
@@ -161,7 +161,7 @@ class UsuarioController extends AbstractController
                     "email" => $usuario->getEmail(),
                     "nombre" => $usuario->getNombre(),
                     "apellidos" => $usuario->getApellidos(),
-                    "fecha_nac" => $usuario->getFechaNacimiento(),
+                    "fecha_nacimiento" => $usuario->getFechaNacimiento(),
                     "rol" => $usuario->getRol()
                 ];
             }
@@ -177,6 +177,7 @@ class UsuarioController extends AbstractController
     public function get_socios() 
     { 
         $socios = $this->usuarioRepository->findBy(["rol" => "socio"]);
+        $data=[];
         
         foreach ($socios as $socio) {
             $data[] = [
@@ -184,7 +185,7 @@ class UsuarioController extends AbstractController
                 "email" => $socio->getEmail(),
                 "nombre" => $socio->getNombre(),
                 "apellidos" => $socio->getApellidos(),
-                "fecha_nac" => $socio->getFechaNacimiento()
+                "fecha_nacimiento" => $socio->getFechaNacimiento()
              ];
         }
         
@@ -203,18 +204,18 @@ class UsuarioController extends AbstractController
     { 
         $empleados = $this->usuarioRepository->findBy(["rol" => "empleado"]);
         
-        foreach ($empleados as $empleados) {
-            $data = [
-                'id' => $empleados->getId(),
-                'email' => $empleados->getEmail(),
-                'nombre' => $empleados->getNombre(),
-                'apellidos' => $empleados->getApellidos(),
-                'fecha_nac' => $empleados->getFechaNacimiento(),
-                'foto' => $empleados->getFoto(),
-                'rol' => $empleados->getRol(),
-                'facebook' => $empleados->getRedSocial()->getFacebook(),
-                'twitter' => $empleados->getRedSocial()->getTwitter(),
-                "instagram" => $empleados->getRedSocial()->getInstagram()
+        foreach ($empleados as $empleado) {
+            $data[] = [
+                'id' => $empleado->getId(),
+                'email' => $empleado->getEmail(),
+                'nombre' => $empleado->getNombre(),
+                'apellidos' => $empleado->getApellidos(),
+                'fecha_nacimiento' => $empleado->getFechaNacimiento(),
+                'foto' => $empleado->getFoto(),
+                'rol' => $empleado->getRol(),
+                'facebook' => $empleado->getRedSocial()->getFacebook(),
+                'twitter' => $empleado->getRedSocial()->getTwitter(),
+                "instagram" => $empleado->getRedSocial()->getInstagram()
             ];
         }
         
@@ -224,5 +225,112 @@ class UsuarioController extends AbstractController
         }
 
         return new JsonResponse($data, Response::HTTP_OK);
+    }
+    
+    /**
+     * @Route("usuario/socio/{id}" , name="update_socio" , methods={"PUT"})
+     */
+    public function modificarSocio(int $id, Request $request): JsonResponse
+    {
+        $usuario = $this->usuarioRepository->findOneBy(["id" => $id]);
+        $data = json_decode($request->getContent(),true);
+        
+        $existe_usuario = $this->usuarioRepository->findOneBy(array("email" => $data["email"]));
+
+        $fecha_nacimiento = $data['fecha_nacimiento'];
+        
+        if ($usuario != null) 
+        {
+            if (($usuario->getEmail() == $data["email"]) || $existe_usuario == null) {
+                
+                if (!empty($data["email"]) && !filter_var($data["email"], FILTER_VALIDATE_EMAIL)) 
+                {
+                    return new JsonResponse(['error' => 'Introduzca un email válido'], Response::HTTP_PARTIAL_CONTENT);
+                } 
+                else if (!empty($data["password"]) && strlen($data["password"]) < 4) 
+                {
+                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_PARTIAL_CONTENT);
+                } 
+                else 
+                {
+                    empty($data["nombre"]) ? true : $usuario->setNombre($data["nombre"]);
+                    empty($data["apellidos"]) ? true : $usuario->setApellidos($data["apellidos"]);
+                    empty($data["fecha_nacimiento"]) ? true : $usuario->setFechaNacimiento(new DateTime($fecha_nacimiento));
+                    empty($data["email"]) ? true : $usuario->setEmail($data["email"]);
+                    empty($data["password"]) ? true : $usuario->setPassword(password_hash($data["password"], PASSWORD_BCRYPT));
+      
+                    $this->usuarioRepository->updateUsuario($usuario);
+
+                    return new JsonResponse(['status' => 'Se ha actualizado correctamente'], Response::HTTP_OK);
+                }
+            } 
+            else 
+            {
+                return new JsonResponse(['error' => 'Ya existe un socio con ese email'], Response::HTTP_PARTIAL_CONTENT);
+            }
+        }
+        else
+        {
+            return new JsonResponse(["error" => "No hay ningún socio con ese id"], Response::HTTP_PARTIAL_CONTENT);
+        }
+    }
+    
+        /**
+     * @Route("usuario/empleado/{id}" , name="update_empleado" , methods={"PUT"})
+     */
+    public function modificarEmpleado(int $id, Request $request): JsonResponse 
+    {
+        $empleado = $this->usuarioRepository->findOneBy(["id" => $id]);
+
+        $data = json_decode($request->getContent(), true);
+
+        $existe_email = $this->usuarioRepository->findOneBy(array("email" => $data["email"]));
+ 
+        if ($empleado != null) 
+        {
+            if (($empleado->getEmail() == $data["email"]) || $existe_email == null) 
+            {
+                if (!filter_var($data["email"], FILTER_VALIDATE_EMAIL)) 
+                {
+                    return new JsonResponse(['error' => 'Formato de email no válido.'], Response::HTTP_PARTIAL_CONTENT);
+                } 
+                else if (!empty($data["password"]) && strlen($data["password"]) < 4) 
+                {
+                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_PARTIAL_CONTENT);
+                } 
+                else {
+                    empty($data["email"]) ? true : $empleado->setEmail($data["email"]);
+                    empty($data["nombre"]) ? true : $empleado->setNombre($data["nombre"]);
+                    empty($data["apellidos"]) ? true : $empleado->setApellidos($data["apellidos"]);
+                    empty($data["password"]) ? true : $empleado->setPassword(password_hash($data["password"], PASSWORD_BCRYPT));
+                    empty($data["fecha_nacimiento"]) ? true : $empleado->setFechaNacimiento(new DateTime("Y-m-d",$data["fecha_nacimiento"]));
+                    empty($data["rol"]) ? true : $empleado->setRol($data["rol"]);
+                    empty($data["foto"]) ? true : $empleado->setFoto($data["foto"]);
+                    empty($data["facebook"]) ? true : $empleado->getRedeSocial()->setFacebook($data["facebook"]);
+                    empty($data["twitter"]) ? true : $empleado->getRedeSocial()->setTwitter($data["twitter"]);
+                    empty($data["instagram"]) ? true : $empleado->getRedeSocial()->setInstagram($data["instagram"]);
+                    
+                    $this->usuarioRepository->updateUsuario($empleado);
+                }
+                return new JsonResponse(['status' => 'Se ha actualizado correctamente'], Response::HTTP_OK);
+            } 
+            else {
+                return new JsonResponse(['error' => 'Ya existe un empleado con ese email'], Response::HTTP_PARTIAL_CONTENT);
+            }
+        } 
+        else {
+            return new JsonResponse(["error" => "No hay ningún empleado con ese id"], Response::HTTP_PARTIAL_CONTENT);
+        }
+    }
+     /**
+     * @Route("usuario/user/{id}", name="delete_user", methods={"DELETE"})
+     */
+    public function deleteUser(int $id): JsonResponse
+    {
+        $usuario = $this->usuarioRepository->findOneBy(['id' => $id]);
+        
+        $this->usuarioRepository->removeUsuario($usuario);
+        
+        return new JsonResponse(['status' => 'Se ha borrado correctamente'], Response::HTTP_OK);
     }
 }
