@@ -147,7 +147,7 @@ class UsuarioController extends AbstractController
                     'email' => $usuario->getEmail(),
                     'nombre' => $usuario->getNombre(),
                     'apellidos' => $usuario->getApellidos(),
-                    'fecha_nacimiento' => $usuario->getFechaNacimiento(),
+                    'fecha_nacimiento' => $usuario->getFechaNacimiento()->format('d-m-Y'),
                     'foto' => $usuario->getFoto(),
                     'rol' => $usuario->getRol(),
                     'facebook'=>$usuario->getRedSocial()->getFacebook(),
@@ -156,13 +156,24 @@ class UsuarioController extends AbstractController
                 ]; 
             }
             else {
+                $estadisticas = [];
+                foreach ($usuario->getEstadisticas() as $estadistica)
+                {
+                    $estadisticas[] = [
+                        "id" => $estadistica->getId(),
+                        "peso" => $estadistica->getPeso(),
+                        "altura" => $estadistica->getAltura(),
+                        "imc" => $estadistica->getImc()
+                    ];
+                }
                 $data = [
                     "id" => $usuario->getId(),
                     "email" => $usuario->getEmail(),
                     "nombre" => $usuario->getNombre(),
                     "apellidos" => $usuario->getApellidos(),
-                    "fecha_nacimiento" => $usuario->getFechaNacimiento(),
-                    "rol" => $usuario->getRol()
+                    "fecha_nacimiento" => $usuario->getFechaNacimiento()->format('d-m-Y'),
+                    "rol" => $usuario->getRol(),
+                    "estadisticas" => $estadisticas
                 ];
             }
 

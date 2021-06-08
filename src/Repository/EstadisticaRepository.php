@@ -5,7 +5,7 @@ namespace App\Repository;
 use App\Entity\Estadistica;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-
+use Doctrine\ORM\EntityManagerInterface;
 /**
  * @method Estadistica|null find($id, $lockMode = null, $lockVersion = null)
  * @method Estadistica|null findOneBy(array $criteria, array $orderBy = null)
@@ -14,9 +14,16 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EstadisticaRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager)
     {
         parent::__construct($registry, Estadistica::class);
+        $this->manager = $manager;
+    }
+
+    function saveEstadistica(Estadistica $estadistica) 
+     {
+        $this->manager->persist($estadistica);
+        $this->manager->flush();
     }
 
     // /**
