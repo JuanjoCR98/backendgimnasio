@@ -40,7 +40,10 @@ class UsuarioController extends AbstractController
         
         if($rol == "empleado")
         {
-           $foto= $data['foto'];
+           // $mime = 'image/jpeg';
+           $imagen = $data['foto'];
+         /*  $mime = $imagen['type'];
+           $size = $imagen['size'];*/
            $facebook =$data['facebook'];
            $twitter = $data['instagram'];
            $instagram = $data['twitter'];
@@ -49,20 +52,24 @@ class UsuarioController extends AbstractController
         $existe_usuario = $this->usuarioRepository->findOneBy(["email" => $email]);
         
         if(empty($email)||empty($password)||empty($nombre)||empty($apellidos)||empty($fecha_nacimiento)){
-                return new JsonResponse(['error' => 'Campos obligatorios vacios'], Response::HTTP_PARTIAL_CONTENT);
+                return new JsonResponse(['error' => 'Campos obligatorios vacios'], Response::HTTP_NOT_FOUND);
         }
         else if($existe_usuario != null)
         {
-            return new JsonResponse(['error' => 'Ya existe un usuario con ese email'], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(['error' => 'Ya existe un usuario con ese email'], Response::HTTP_NOT_FOUND);
         }
         else if(!filter_var($email,FILTER_VALIDATE_EMAIL))
         {
-            return new JsonResponse(['error' => 'Formato de email no válido.'], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(['error' => 'Formato de email no válido.'], Response::HTTP_NOT_FOUND);
         }
         else if(strlen($password) < 4)
         {
-            return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_NOT_FOUND);
         }
+       /* else if($mime != 'image/jpeg' || $mime != 'image/png')
+        {
+           return new JsonResponse(['error' => 'El formato valido para las imagenes son jpeg o png'], Response::HTTP_PARTIAL_CONTENT);                           
+        }*/
         else
         {
             $usuario = new Usuario();
@@ -74,7 +81,17 @@ class UsuarioController extends AbstractController
             $usuario->setRol($rol);
             if($rol == "empleado")
             {
-                $usuario->setFoto($foto);
+               /* $nombre_final = "C:/xampp/htdocs/ProyectoFinalDaw/backendgimnasio/public/imagenes/" .uniqid() . '.' . $imagen->guessExtension();
+
+                    try {
+                        // Movemos la foto al directorio public/imagenes
+                        // Añadimos ruta en 'config/services.yaml'
+                        $foto->move($this->getParameter('directorio_imagenes'), $nombre_final);
+                        // Asignamos el nombre de la foto al usuario antes de guardarlo 
+                    } catch (FileException $e) {
+                        // ... handle exception if something happens during file upload
+                    }*/
+                $usuario->setFoto($imagen);
                 
                 $redSocial = new RedSocial();
                 $redSocial->setFacebook($facebook);
@@ -163,7 +180,7 @@ class UsuarioController extends AbstractController
                         "id" => $estadistica->getId(),
                         "peso" => $estadistica->getPeso(),
                         "altura" => $estadistica->getAltura(),
-                        "imc" => $estadistica->getImc()
+                        "imc" => round($estadistica->getImc(),2)
                     ];
                 }
                 $data = [
@@ -196,7 +213,7 @@ class UsuarioController extends AbstractController
                 "email" => $socio->getEmail(),
                 "nombre" => $socio->getNombre(),
                 "apellidos" => $socio->getApellidos(),
-                "fecha_nacimiento" => $socio->getFechaNacimiento()
+                "fecha_nacimiento" =>  $socio->getFechaNacimiento()->format('Y-m-d')
              ];
         }
         
@@ -221,7 +238,7 @@ class UsuarioController extends AbstractController
                 'email' => $empleado->getEmail(),
                 'nombre' => $empleado->getNombre(),
                 'apellidos' => $empleado->getApellidos(),
-                'fecha_nacimiento' => $empleado->getFechaNacimiento(),
+                'fecha_nacimiento' => $empleado->getFechaNacimiento()->format('Y-m-d'),
                 'foto' => $empleado->getFoto(),
                 'rol' => $empleado->getRol(),
                 'facebook' => $empleado->getRedSocial()->getFacebook(),
@@ -241,32 +258,32 @@ class UsuarioController extends AbstractController
     /**
      * @Route("usuario/socio/{id}" , name="update_socio" , methods={"PUT"})
      */
-    public function modificarSocio(int $id, Request $request): JsonResponse
+    public function modificarSocio(int $id,Request $request): JsonResponse
     {
-        $usuario = $this->usuarioRepository->findOneBy(["id" => $id]);
         $data = json_decode($request->getContent(),true);
-        
+        $usuario = $this->usuarioRepository->findOneBy(["id" => $id]);
+       
         $existe_usuario = $this->usuarioRepository->findOneBy(array("email" => $data["email"]));
 
         $fecha_nacimiento = $data['fecha_nacimiento'];
-        
+        $fecha = new DateTime($fecha_nacimiento);
         if ($usuario != null) 
         {
             if (($usuario->getEmail() == $data["email"]) || $existe_usuario == null) {
                 
                 if (!empty($data["email"]) && !filter_var($data["email"], FILTER_VALIDATE_EMAIL)) 
                 {
-                    return new JsonResponse(['error' => 'Introduzca un email válido'], Response::HTTP_PARTIAL_CONTENT);
+                    return new JsonResponse(['error' => 'Introduzca un email válido'], Response::HTTP_NOT_FOUND);
                 } 
                 else if (!empty($data["password"]) && strlen($data["password"]) < 4) 
                 {
-                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_PARTIAL_CONTENT);
+                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_NOT_FOUND);
                 } 
                 else 
                 {
                     empty($data["nombre"]) ? true : $usuario->setNombre($data["nombre"]);
                     empty($data["apellidos"]) ? true : $usuario->setApellidos($data["apellidos"]);
-                    empty($data["fecha_nacimiento"]) ? true : $usuario->setFechaNacimiento(new DateTime($fecha_nacimiento));
+                    empty($data["fecha_nacimiento"]) ? true : $usuario->setFechaNacimiento($fecha);
                     empty($data["email"]) ? true : $usuario->setEmail($data["email"]);
                     empty($data["password"]) ? true : $usuario->setPassword(password_hash($data["password"], PASSWORD_BCRYPT));
       
@@ -277,12 +294,12 @@ class UsuarioController extends AbstractController
             } 
             else 
             {
-                return new JsonResponse(['error' => 'Ya existe un socio con ese email'], Response::HTTP_PARTIAL_CONTENT);
+                return new JsonResponse(['error' => 'Ya existe un usuario con ese email'], Response::HTTP_NOT_FOUND);
             }
         }
         else
         {
-            return new JsonResponse(["error" => "No hay ningún socio con ese id"], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(["error" => "No hay ningún socio con ese id"], Response::HTTP_NOT_FOUND);
         }
     }
     
@@ -295,6 +312,9 @@ class UsuarioController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
+        $fecha_nacimiento = $data['fecha_nacimiento'];
+        $fecha = new DateTime($fecha_nacimiento);
+       
         $existe_email = $this->usuarioRepository->findOneBy(array("email" => $data["email"]));
  
         if ($empleado != null) 
@@ -303,18 +323,18 @@ class UsuarioController extends AbstractController
             {
                 if (!filter_var($data["email"], FILTER_VALIDATE_EMAIL)) 
                 {
-                    return new JsonResponse(['error' => 'Formato de email no válido.'], Response::HTTP_PARTIAL_CONTENT);
+                    return new JsonResponse(['error' => 'Formato de email no válido.'], Response::HTTP_NOT_FOUND);
                 } 
                 else if (!empty($data["password"]) && strlen($data["password"]) < 4) 
                 {
-                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_PARTIAL_CONTENT);
+                    return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_NOT_FOUND);
                 } 
                 else {
                     empty($data["email"]) ? true : $empleado->setEmail($data["email"]);
                     empty($data["nombre"]) ? true : $empleado->setNombre($data["nombre"]);
                     empty($data["apellidos"]) ? true : $empleado->setApellidos($data["apellidos"]);
                     empty($data["password"]) ? true : $empleado->setPassword(password_hash($data["password"], PASSWORD_BCRYPT));
-                    empty($data["fecha_nacimiento"]) ? true : $empleado->setFechaNacimiento(new DateTime("Y-m-d",$data["fecha_nacimiento"]));
+                   empty($data["fecha_nacimiento"]) ? true : $empleado->setFechaNacimiento($fecha);
                     empty($data["rol"]) ? true : $empleado->setRol($data["rol"]);
                     empty($data["foto"]) ? true : $empleado->setFoto($data["foto"]);
                     empty($data["facebook"]) ? true : $empleado->getRedeSocial()->setFacebook($data["facebook"]);
@@ -326,11 +346,11 @@ class UsuarioController extends AbstractController
                 return new JsonResponse(['status' => 'Se ha actualizado correctamente'], Response::HTTP_OK);
             } 
             else {
-                return new JsonResponse(['error' => 'Ya existe un empleado con ese email'], Response::HTTP_PARTIAL_CONTENT);
+                return new JsonResponse(['error' => 'Ya existe un usuario con ese email'], Response::HTTP_NOT_FOUND);
             }
         } 
         else {
-            return new JsonResponse(["error" => "No hay ningún empleado con ese id"], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(["error" => "No hay ningún empleado con ese id"], Response::HTTP_NOT_FOUND);
         }
     }
      /**

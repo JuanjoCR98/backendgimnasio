@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     jwt_secret: JWT_SECRET
+    directorio_imagenes: '%kernel.project_dir%/public/imagenes'
 services:
     # default configuration for services in *this* file
     _defaults:
