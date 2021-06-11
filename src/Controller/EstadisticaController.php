@@ -39,7 +39,7 @@ class EstadisticaController extends AbstractController
         {
             if (empty($peso) || empty($altura)) 
             {
-                return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_PARTIAL_CONTENT);
+                return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_NOT_FOUND);
             } 
             else 
             {
@@ -56,7 +56,7 @@ class EstadisticaController extends AbstractController
             }
         } 
         else {
-            return new JsonResponse(['error' => 'No existe ningún socio con ese id'], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(['error' => 'No existe ningún socio con ese id'], Response::HTTP_NOT_FOUND);
         }
     }
 }

@@ -40,10 +40,6 @@ class UsuarioController extends AbstractController
         
         if($rol == "empleado")
         {
-           // $mime = 'image/jpeg';
-           $imagen = $data['foto'];
-         /*  $mime = $imagen['type'];
-           $size = $imagen['size'];*/
            $facebook =$data['facebook'];
            $twitter = $data['instagram'];
            $instagram = $data['twitter'];
@@ -66,10 +62,6 @@ class UsuarioController extends AbstractController
         {
             return new JsonResponse(['error' => 'La contraseña debe de tener al menos 4 caracteres'], Response::HTTP_NOT_FOUND);
         }
-       /* else if($mime != 'image/jpeg' || $mime != 'image/png')
-        {
-           return new JsonResponse(['error' => 'El formato valido para las imagenes son jpeg o png'], Response::HTTP_PARTIAL_CONTENT);                           
-        }*/
         else
         {
             $usuario = new Usuario();
@@ -80,18 +72,8 @@ class UsuarioController extends AbstractController
             $usuario->setFechaNacimiento(new DateTime($fecha_nacimiento));
             $usuario->setRol($rol);
             if($rol == "empleado")
-            {
-               /* $nombre_final = "C:/xampp/htdocs/ProyectoFinalDaw/backendgimnasio/public/imagenes/" .uniqid() . '.' . $imagen->guessExtension();
-
-                    try {
-                        // Movemos la foto al directorio public/imagenes
-                        // Añadimos ruta en 'config/services.yaml'
-                        $foto->move($this->getParameter('directorio_imagenes'), $nombre_final);
-                        // Asignamos el nombre de la foto al usuario antes de guardarlo 
-                    } catch (FileException $e) {
-                        // ... handle exception if something happens during file upload
-                    }*/
-                $usuario->setFoto($imagen);
+            {  
+                $usuario->setFoto("");
                 
                 $redSocial = new RedSocial();
                 $redSocial->setFacebook($facebook);
@@ -119,7 +101,7 @@ class UsuarioController extends AbstractController
 
         if(empty($email) || empty($password))
         {
-            return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_PARTIAL_CONTENT);
+            return new JsonResponse(['error' => 'Todos los campos son obligatorios. Introduzca todos los campos'], Response::HTTP_NOT_FOUND);
         }
         else if($usuario == null)
         {
@@ -336,10 +318,9 @@ class UsuarioController extends AbstractController
                     empty($data["password"]) ? true : $empleado->setPassword(password_hash($data["password"], PASSWORD_BCRYPT));
                    empty($data["fecha_nacimiento"]) ? true : $empleado->setFechaNacimiento($fecha);
                     empty($data["rol"]) ? true : $empleado->setRol($data["rol"]);
-                    empty($data["foto"]) ? true : $empleado->setFoto($data["foto"]);
-                    empty($data["facebook"]) ? true : $empleado->getRedeSocial()->setFacebook($data["facebook"]);
-                    empty($data["twitter"]) ? true : $empleado->getRedeSocial()->setTwitter($data["twitter"]);
-                    empty($data["instagram"]) ? true : $empleado->getRedeSocial()->setInstagram($data["instagram"]);
+                    empty($data["facebook"]) ? true : $empleado->getRedSocial()->setFacebook($data["facebook"]);
+                    empty($data["twitter"]) ? true : $empleado->getRedSocial()->setTwitter($data["twitter"]);
+                    empty($data["instagram"]) ? true : $empleado->getRedSocial()->setInstagram($data["instagram"]);
                     
                     $this->usuarioRepository->updateUsuario($empleado);
                 }
@@ -352,6 +333,44 @@ class UsuarioController extends AbstractController
         else {
             return new JsonResponse(["error" => "No hay ningún empleado con ese id"], Response::HTTP_NOT_FOUND);
         }
+    }
+    
+           /**
+     * @Route("usuario/image/{id}" , name="subir_imagen" , methods={"POST"})
+     */
+    public function subirImagen(int $id, Request $request): JsonResponse 
+    {
+        $empleado = $this->usuarioRepository->findOneBy(["id" => $id]);
+        $root = "C:/xampp/htdocs/ProyectoFinalDaw/backendgimnasio/";
+        if (isset($_FILES['foto']))
+        {
+            $foto_empleado = $_FILES['foto'];
+            $mime = $foto_empleado['type'];
+            $size = $foto_empleado['size'];
+            $rutaTemporal = $foto_empleado['tmp_name'];
+            
+            $extension = strpos($mime, "jpeg") ? ".jpg": ".png";
+            $nameFoto = "empleado".$id.$extension;
+            $ruta = $root . "public/imagenes/".$nameFoto;
+            
+            $existeImagen = $root . "public/imagenes/empleado".$id."*";
+            $imagen = glob($existeImagen);
+            
+            foreach ($imagen as $img)
+            {
+                unlink($img);
+            }
+            
+         if (move_uploaded_file($rutaTemporal, $ruta)) {
+             $fotofinal = "http://localhost/ProyectoFinalDaw/backendgimnasio/public/imagenes/".$nameFoto;
+             $empleado->setFoto($fotofinal);
+             $this->usuarioRepository->updateUsuario($empleado);
+             return new JsonResponse(['status' => 'Se ha subido correctamente'], Response::HTTP_OK);
+        } else {
+            return new JsonResponse(["error" => "¡Posible ataque de subida de ficheros!"], Response::HTTP_NOT_FOUND);
+        }
+       }
+       return new JsonResponse(["error" => "No has seleccionado ninguna imagen"], Response::HTTP_PARTIAL_CONTENT);
     }
      /**
      * @Route("usuario/user/{id}", name="delete_user", methods={"DELETE"})
